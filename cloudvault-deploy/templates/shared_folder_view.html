@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ shared_folder.name }} - Pasta Compartilhada{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="fas fa-folder-open text-warning"></i> {{ shared_folder.name }}</h1>
+                    {% if shared_folder.description %}
+                        <p class="text-muted">{{ shared_folder.description }}</p>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('organization_dashboard', org_id=shared_folder.organization.id) }}" 
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+            
+            {% if files %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Arquivos ({{ files|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>Tamanho</th>
+                                        <th>Enviado por</th>
+                                        <th>Data</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in files %}
+                                    <tr>
+                                        <td>
+                                            <i class="{{ get_file_icon(file.filename) }}"></i>
+                                            {{ file.original_filename }}
+                                        </td>
+                                        <td>{{ file.file_type }}</td>
+                                        <td>{{ format_file_size(file.file_size) }}</td>
+                                        <td>{{ file.owner.username }}</td>
+                                        <td>{{ file.created_at.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('download_file', file_id=file.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">Pasta vazia</h3>
+                    <p class="text-muted">Esta pasta compartilhada ainda não possui arquivos.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

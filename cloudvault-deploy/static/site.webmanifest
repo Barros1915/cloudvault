@@ -1,0 +1,29 @@
+{
+    "name": "CloudVault",
+    "short_name": "CloudVault",
+    "description": "Seu cofre digital seguro na nuvem",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#6366f1",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["productivity", "utilities"],
+    "lang": "pt-BR"
+} 

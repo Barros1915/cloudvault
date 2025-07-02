@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}☁️ CloudVault - Compartilhar Arquivo{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-share-alt me-2 cloud-gradient"></i>Compartilhar Arquivo
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Arquivo: {{ file.original_filename }}</h5>
+                        <p class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ file.owner.username }} • 
+                            <i class="fas fa-calendar me-1"></i>{{ file.created_at.strftime('%d/%m/%Y') }} • 
+                            <i class="fas fa-weight-hanging me-1"></i>{{ (file.file_size / 1024 / 1024)|round(2) }} MB
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulário de Compartilhamento -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Compartilhar com Usuário
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nome do usuário</label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Digite o nome do usuário" list="usersList">
+                        <datalist id="usersList">
+                            {% for user in users %}
+                            <option value="{{ user.username }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="permission" class="form-label">Permissão</label>
+                        <select class="form-select" id="permission" name="permission">
+                            <option value="view">Visualizar - Apenas visualizar e baixar</option>
+                            <option value="edit">Editar - Visualizar, baixar e editar arquivos de texto</option>
+                            <option value="admin">Administrador - Visualizar, baixar, editar e excluir</option>
+                        </select>
+                        <div class="form-text">
+                            <small>
+                                <strong>Visualizar:</strong> O usuário pode apenas visualizar e baixar o arquivo.<br>
+                                <strong>Editar:</strong> O usuário pode visualizar, baixar e editar arquivos de texto (txt, md, py, js, html, css, json, xml).<br>
+                                <strong>Administrador:</strong> O usuário tem controle total, incluindo exclusão do arquivo.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expires_in" class="form-label">Expira em</label>
+                        <select class="form-select" id="expires_in" name="expires_in">
+                            <option value="never">Nunca</option>
+                            <option value="1_day">1 dia</option>
+                            <option value="1_week">1 semana</option>
+                            <option value="1_month">1 mês</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-share me-2"></i>Compartilhar
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Compartilhamentos Ativos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if shares %}
+                    <div class="list-group">
+                        {% for share in shares %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ share.shared_with.username }}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-key me-1"></i>{{ share.permission.title() }} • 
+                                        <i class="fas fa-calendar me-1"></i>{{ share.created_at.strftime('%d/%m/%Y') }}
+                                        {% if share.expires_at %}
+                                            • <i class="fas fa-clock me-1"></i>Expira em {{ share.expires_at.strftime('%d/%m/%Y') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <form method="POST" action="{{ url_for('revoke_share', share_id=share.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                            onclick="return confirm('Tem certeza que deseja revogar este compartilhamento?')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Nenhum compartilhamento ativo</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Autocomplete para usuários
+document.getElementById('username').addEventListener('input', function() {
+    const query = this.value;
+    if (query.length < 2) return;
+    
+    fetch(`/api/users?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(users => {
+            const datalist = document.getElementById('usersList');
+            datalist.innerHTML = '';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.username;
+                datalist.appendChild(option);
+            });
+        });
+});
+</script>
+{% endblock %} 

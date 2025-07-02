@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}☁️ CloudVault - Seu Armazenamento na Nuvem{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card text-center">
+            <div class="card-body py-5">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-cloud text-primary me-3 cloud-animation"></i>
+                    CloudVault
+                </h1>
+                <p class="lead mb-4">
+                    Seu cofre digital seguro na nuvem. Armazene, organize e acesse seus arquivos de qualquer lugar.
+                </p>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-shield-alt fa-2x text-success mb-3"></i>
+                            <h5>Seguro</h5>
+                            <p class="text-muted small">Seus dados protegidos com criptografia</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-sync fa-2x text-primary mb-3"></i>
+                            <h5>Sincronizado</h5>
+                            <p class="text-muted small">Acesso instantâneo em todos os dispositivos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-infinity fa-2x text-info mb-3"></i>
+                            <h5>Ilimitado</h5>
+                            <p class="text-muted small">Armazenamento sem limites</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Começar Agora
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Já tenho conta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="text-center mb-4">Recursos Principais</h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <i class="fas fa-folder fa-2x text-primary mb-3"></i>
+                            <h6>Organização</h6>
+                            <p class="text-muted small">Crie pastas e organize seus arquivos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <i class="fas fa-search fa-2x text-info mb-3"></i>
+                            <h6>Busca Rápida</h6>
+                            <p class="text-muted small">Encontre arquivos instantaneamente</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <i class="fas fa-share-alt fa-2x text-success mb-3"></i>
+                            <h6>Compartilhamento</h6>
+                            <p class="text-muted small">Compartilhe arquivos facilmente</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <i class="fas fa-mobile-alt fa-2x text-warning mb-3"></i>
+                            <h6>Multiplataforma</h6>
+                            <p class="text-muted small">Acesse de qualquer dispositivo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

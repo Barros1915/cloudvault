@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}📊 Relatórios - Cloud Storage{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line me-2"></i>Relatórios e Estatísticas
+                </h2>
+                <p class="text-muted">Análise detalhada do seu armazenamento</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas Gerais -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-file fa-2x text-primary mb-2"></i>
+                <h3 class="text-primary">{{ total_files }}</h3>
+                <p class="text-muted mb-0">Arquivos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-folder fa-2x text-success mb-2"></i>
+                <h3 class="text-success">{{ total_folders }}</h3>
+                <p class="text-muted mb-0">Pastas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-database fa-2x text-info mb-2"></i>
+                <h3 class="text-info">{{ format_file_size(total_size) }}</h3>
+                <p class="text-muted mb-0">Armazenamento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar fa-2x text-warning mb-2"></i>
+                <h3 class="text-warning">{{ current_user.created_at.strftime('%d/%m/%Y') }}</h3>
+                <p class="text-muted mb-0">Membro desde</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos e Análises -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Tipos de Arquivo (Top 10)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_file_types %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Quantidade</th>
+                                    <th>Tamanho</th>
+                                    <th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file_type, stats in top_file_types %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">{{ file_type.upper() }}</span>
+                                    </td>
+                                    <td>{{ stats.count }}</td>
+                                    <td>{{ format_file_size(stats.size) }}</td>
+                                    <td>{{ "%.1f"|format(stats.size / total_size * 100) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Nenhum arquivo encontrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Atividade por Mês
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_data %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Mês</th>
+                                    <th>Arquivos</th>
+                                    <th>Tamanho</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month, stats in monthly_data %}
+                                <tr>
+                                    <td>{{ month }}</td>
+                                    <td>{{ stats.count }}</td>
+                                    <td>{{ format_file_size(stats.size) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Nenhum dado disponível</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Arquivos Recentes e Maiores -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Arquivos Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_files %}
+                    <div class="list-group list-group-flush">
+                        {% for file in recent_files %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ file.original_filename }}</strong>
+                                <br><small class="text-muted">{{ file.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ format_file_size(file.file_size) }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Nenhum arquivo recente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-weight-hanging me-2"></i>Maiores Arquivos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if largest_files %}
+                    <div class="list-group list-group-flush">
+                        {% for file in largest_files %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ file.original_filename }}</strong>
+                                <br><small class="text-muted">{{ file.file_type.upper() }}</small>
+                            </div>
+                            <span class="badge bg-danger rounded-pill">{{ format_file_size(file.file_size) }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Nenhum arquivo encontrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>Ações
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <a href="{{ url_for('export_data') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-download me-2"></i>Exportar Dados
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-success w-100" onclick="printReport()">
+                            <i class="fas fa-print me-2"></i>Imprimir Relatório
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printReport() {
+    window.print();
+}
+
+// Atualizar relatório a cada 30 segundos
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %} 

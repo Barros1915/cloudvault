@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{{ organization.name }} - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header da Organização -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-1">
+                        <i class="fas fa-building text-primary"></i>
+                        {{ organization.name }}
+                    </h1>
+                    {% if organization.description %}
+                        <p class="text-muted mb-0">{{ organization.description }}</p>
+                    {% endif %}
+                    <small class="text-muted">
+                        Criada em {{ organization.created_at.strftime('%d/%m/%Y') }}
+                        {% if organization.owner_id == current_user.id %}
+                            • Você é o dono
+                        {% else %}
+                            • Dono: {{ organization.owner.username }}
+                        {% endif %}
+                    </small>
+                </div>
+                <div>
+                    <a href="{{ url_for('organizations') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ teams|length }}</h4>
+                            <small>Equipes</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ projects|length }}</h4>
+                            <small>Projetos</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-project-diagram fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ shared_folders|length }}</h4>
+                            <small>Pastas Compartilhadas</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-folder-open fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ organization.owner.username }}</h4>
+                            <small>Dono</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-crown fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas (apenas para dono) -->
+    {% if organization.owner_id == current_user.id %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+                                <i class="fas fa-plus"></i> Criar Equipe
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                                <i class="fas fa-plus"></i> Criar Projeto
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-info w-100 mb-2" data-bs-toggle="modal" data-bs-target="#createSharedFolderModal">
+                                <i class="fas fa-plus"></i> Criar Pasta Compartilhada
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Conteúdo Principal -->
+    <div class="row">
+        <!-- Equipes -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Equipes</h5>
+                    {% if organization.owner_id == current_user.id %}
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if teams %}
+                        <div class="list-group list-group-flush">
+                            {% for team in teams %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ team.name }}</h6>
+                                    {% if team.description %}
+                                        <small class="text-muted">{{ team.description }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary rounded-pill">{{ team.members|length }} membros</span>
+                                    {% if organization.owner_id == current_user.id %}
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="openInviteModal({{ team.id }})" 
+                                                title="Convidar usuário">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Nenhuma equipe criada ainda.</p>
+                            {% if organization.owner_id == current_user.id %}
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+                                    <i class="fas fa-plus"></i> Criar Primeira Equipe
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Projetos -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Projetos</h5>
+                    {% if organization.owner_id == current_user.id %}
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="list-group list-group-flush">
+                            {% for project in projects %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ project.name }}</h6>
+                                {% if project.description %}
+                                    <small class="text-muted">{{ project.description }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        Criado por {{ project.creator.username }} em {{ project.created_at.strftime('%d/%m/%Y') }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-project-diagram fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Nenhum projeto criado ainda.</p>
+                            {% if organization.owner_id == current_user.id %}
+                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                                    <i class="fas fa-plus"></i> Criar Primeiro Projeto
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pastas Compartilhadas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-folder-open"></i> Pastas Compartilhadas</h5>
+                    {% if organization.owner_id == current_user.id %}
+                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#createSharedFolderModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if shared_folders %}
+                        <div class="row">
+                            {% for folder in shared_folders %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-folder text-warning"></i>
+                                            {{ folder.name }}
+                                        </h6>
+                                        {% if folder.description %}
+                                            <p class="card-text small text-muted">{{ folder.description }}</p>
+                                        {% endif %}
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                Criado por {{ folder.creator.username }}
+                                            </small>
+                                            <a href="{{ url_for('shared_folder_view', folder_id=folder.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> Ver
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-folder-open fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Nenhuma pasta compartilhada criada ainda.</p>
+                            {% if organization.owner_id == current_user.id %}
+                                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#createSharedFolderModal">
+                                    <i class="fas fa-plus"></i> Criar Primeira Pasta
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modais -->
+{% include 'modals/create_team_modal.html' %}
+{% include 'modals/create_project_modal.html' %}
+{% include 'modals/create_shared_folder_modal.html' %}
+{% include 'modals/invite_user_modal.html' %}
+
+<script>
+// Função para abrir o modal de convite com o ID da equipe
+function openInviteModal(teamId) {
+    const form = document.getElementById('inviteUserForm');
+    form.action = `/team/${teamId}/invite_user`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('inviteUserModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 

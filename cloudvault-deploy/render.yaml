@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: cloudvault
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: UPLOAD_FOLDER
+        value: uploads
+      - key: MAX_CONTENT_LENGTH
+        value: 524288000 

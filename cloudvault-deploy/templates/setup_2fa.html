@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}🔐 Configurar 2FA - Cloud Storage{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Configurar Autenticação de Dois Fatores
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <p class="text-muted">
+                        Escaneie o QR Code com seu aplicativo de autenticação (Google Authenticator, Authy, etc.)
+                    </p>
+                </div>
+                
+                <!-- QR Code -->
+                <div class="text-center mb-4">
+                    <img src="{{ qr_code }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                </div>
+                
+                <!-- Chave Secreta -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-key me-2"></i>Chave Secreta</h6>
+                    <p class="mb-2">Se não conseguir escanear o QR Code, use esta chave manualmente:</p>
+                    <code class="d-block p-2 bg-light rounded">{{ secret }}</code>
+                </div>
+                
+                <!-- Instruções -->
+                <div class="mb-4">
+                    <h6><i class="fas fa-list me-2"></i>Instruções:</h6>
+                    <ol class="text-muted">
+                        <li>Abra seu aplicativo de autenticação</li>
+                        <li>Escaneie o QR Code acima ou digite a chave manualmente</li>
+                        <li>Digite o código de 6 dígitos gerado pelo app</li>
+                        <li>Clique em "Verificar e Ativar"</li>
+                    </ol>
+                </div>
+                
+                <!-- Formulário de Verificação -->
+                <form action="{{ url_for('verify_2fa') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Código de Verificação</label>
+                        <input type="text" class="form-control form-control-lg text-center" 
+                               id="code" name="code" maxlength="6" pattern="[0-9]{6}" 
+                               placeholder="000000" required>
+                        <div class="form-text">Digite o código de 6 dígitos do seu aplicativo</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check me-2"></i>Verificar e Ativar
+                        </button>
+                        <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar às Configurações
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações Adicionais -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="fas fa-info-circle me-2"></i>Informações Importantes</h6>
+                <ul class="text-muted mb-0">
+                    <li>Guarde a chave secreta em um local seguro</li>
+                    <li>Você precisará do código 2FA para fazer login</li>
+                    <li>Recomendamos usar Google Authenticator ou Authy</li>
+                    <li>Você pode desabilitar o 2FA nas configurações a qualquer momento</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-focus no campo de código
+document.getElementById('code').focus();
+
+// Formatação automática do código
+document.getElementById('code').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
+});
+
+// Auto-submit quando 6 dígitos forem digitados
+document.getElementById('code').addEventListener('input', function() {
+    if (this.value.length === 6) {
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %} 

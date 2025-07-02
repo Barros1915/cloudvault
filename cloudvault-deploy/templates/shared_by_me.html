@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}☁️ CloudVault - Meus Compartilhamentos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-share-alt me-2 cloud-gradient"></i>Meus Compartilhamentos
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    Arquivos que você compartilhou com outros usuários
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if shares %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Arquivo</th>
+                                    <th>Compartilhado com</th>
+                                    <th>Permissão</th>
+                                    <th>Data</th>
+                                    <th>Expira</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for share in shares %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if share.file.is_folder %}
+                                                <i class="fas fa-folder text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-file text-primary me-2"></i>
+                                            {% endif %}
+                                            <div>
+                                                <strong>{{ share.file.original_filename }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ (share.file.file_size / 1024 / 1024)|round(2) }} MB</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user me-1"></i>{{ share.shared_with.username }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if share.permission == 'admin' else 'primary' if share.permission == 'edit' else 'secondary' }}">
+                                            {{ share.permission.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-calendar me-1"></i>{{ share.created_at.strftime('%d/%m/%Y') }}
+                                    </td>
+                                    <td>
+                                        {% if share.expires_at %}
+                                            <i class="fas fa-clock me-1"></i>{{ share.expires_at.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            <span class="text-muted">Nunca</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <form method="POST" action="{{ url_for('revoke_share', share_id=share.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-danger" 
+                                                        onclick="return confirm('Tem certeza que deseja revogar este compartilhamento?')"
+                                                        title="Revogar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-share-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum compartilhamento ativo</h5>
+                        <p class="text-muted">Você ainda não compartilhou nenhum arquivo com outros usuários</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

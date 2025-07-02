@@ -1,0 +1,530 @@
+/*
+CloudVault - Estilos Personalizados
+Sistema de Armazenamento em Nuvem
+*/
+
+/* Logo e Branding */
+.cloudvault-logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.cloudvault-logo i {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Ícone personalizado para navbar */
+.navbar-brand .custom-icon {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.navbar-brand .custom-icon::before {
+    content: "🔒";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    filter: brightness(1.2);
+}
+
+.navbar-brand .custom-icon::after {
+    content: "☁️";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
+    opacity: 0.8;
+}
+
+/* Alternativa com ícone de cofre estilizado */
+.navbar-brand .vault-icon {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.navbar-brand .vault-icon::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+}
+
+.navbar-brand .vault-icon::after {
+    content: "CV";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: bold;
+    color: #6366f1;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Ícone de cofre com detalhes */
+.navbar-brand .vault-detailed {
+    position: relative;
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.4);
+    overflow: hidden;
+}
+
+.navbar-brand .vault-detailed::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    bottom: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 3px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.navbar-brand .vault-detailed::after {
+    content: "CV";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: 700;
+    color: #6366f1;
+    font-family: 'Inter', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Ícone com efeito de brilho */
+.navbar-brand .vault-shiny {
+    position: relative;
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
+}
+
+.navbar-brand .vault-shiny::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shine 3s infinite;
+}
+
+.navbar-brand .vault-shiny::after {
+    content: "CV";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: bold;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    z-index: 1;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Animações personalizadas */
+@keyframes cloudFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.cloud-animation {
+    animation: cloudFloat 3s ease-in-out infinite;
+}
+
+/* Botões personalizados do CloudVault */
+.btn-cloudvault {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-cloudvault:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    color: white;
+}
+
+/* Cards com efeito de vidro */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+}
+
+/* Indicadores de status */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-online {
+    background-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.status-uploading {
+    background-color: #f59e0b;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Progress bars personalizadas */
+.progress-cloudvault {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(99, 102, 241, 0.1);
+    overflow: hidden;
+}
+
+.progress-cloudvault .progress-bar {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Tooltips personalizados */
+.tooltip-cloudvault {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip-cloudvault::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.tooltip-cloudvault:hover::after {
+    opacity: 1;
+}
+
+/* Responsividade melhorada */
+@media (max-width: 768px) {
+    .cloudvault-logo {
+        font-size: 1.5rem;
+    }
+    
+    .btn-cloudvault {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Tema escuro específico do CloudVault */
+[data-theme="dark"] .glass-card {
+    background: rgba(30, 41, 59, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .cloudvault-logo {
+    background: linear-gradient(135deg, #a78bfa, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Ícone de nuvem personalizado */
+.navbar-brand .cloud-icon {
+    position: relative;
+    display: inline-block;
+    width: 28px;
+    height: 20px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
+}
+
+.navbar-brand .cloud-icon::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 4px;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+}
+
+.navbar-brand .cloud-icon::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+}
+
+/* Nuvem com efeito de brilho */
+.navbar-brand .cloud-shiny {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 22px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 11px;
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.4);
+    overflow: hidden;
+}
+
+.navbar-brand .cloud-shiny::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shine 4s infinite;
+}
+
+.navbar-brand .cloud-shiny::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 5px;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.navbar-brand .cloud-shiny .cloud-part {
+    position: absolute;
+    top: -8px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Nuvem com gotas de chuva */
+.navbar-brand .cloud-rainy {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 24px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    overflow: visible;
+}
+
+.navbar-brand .cloud-rainy::before {
+    content: "";
+    position: absolute;
+    top: -12px;
+    left: 6px;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+}
+
+.navbar-brand .cloud-rainy::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+}
+
+.navbar-brand .cloud-rainy .rain-drop {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 0 0 2px 2px;
+    animation: rain 2s infinite;
+}
+
+.navbar-brand .cloud-rainy .rain-drop:nth-child(2) {
+    left: 40%;
+    animation-delay: 0.5s;
+}
+
+.navbar-brand .cloud-rainy .rain-drop:nth-child(3) {
+    left: 60%;
+    animation-delay: 1s;
+}
+
+@keyframes rain {
+    0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(10px); opacity: 0; }
+}
+
+/* Ícones padronizados da navbar */
+.navbar-nav .nav-link .icon-dashboard {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navbar-nav .nav-link .icon-reports {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navbar-nav .nav-link .icon-settings {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navbar-nav .nav-link .icon-logout {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Hover effects para os ícones */
+.navbar-nav .nav-link:hover .icon-dashboard,
+.navbar-nav .nav-link:hover .icon-reports,
+.navbar-nav .nav-link:hover .icon-settings,
+.navbar-nav .nav-link:hover .icon-logout {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transform: scale(1.1);
+    transition: all 0.3s ease;
+}
+
+/* Cores dos textos dos links da navbar */
+.navbar-nav .nav-link {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transform: translateY(-1px);
+}
+
+/* Títulos padronizados */
+.page-title,
+.section-title,
+.files-title,
+.folder-title {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+/* Específico para "Meus Arquivos" e "Pasta raiz" */
+.files-section h2,
+.folder-section h2,
+.files-title,
+.folder-title {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+/* Gradiente para ícones de nuvem */
+.cloud-gradient {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+} 

@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}🗑️ CloudVault - Lixeira{% endblock %}
+
+{% block content %}
+<!-- Header da Lixeira -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-0">
+                            <i class="fas fa-trash-alt me-2 text-danger"></i>Lixeira
+                        </h2>
+                        <p class="mb-0 text-muted">Arquivos excluídos - você pode restaurá-los ou excluí-los permanentemente</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Arquivos Excluídos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if files %}
+                    <div class="table-responsive">
+                        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Atenção:</strong> Os arquivos na lixeira podem ser restaurados ou excluídos permanentemente.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" class="form-check-input" id="selectAll">
+                                    </th>
+                                    <th>Nome</th>
+                                    <th>Tamanho</th>
+                                    <th>Tipo</th>
+                                    <th>Excluído em</th>
+                                    <th width="200">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr class="file-item" data-file-id="{{ file.id }}">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input file-checkbox" value="{{ file.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-3">
+                                                {% if file.is_folder %}
+                                                    📁
+                                                {% else %}
+                                                    {{ get_file_icon(file.original_filename) }}
+                                                {% endif %}
+                                            </span>
+                                            <div>
+                                                <strong>{{ file.original_filename }}</strong>
+                                                {% if file.is_folder %}
+                                                    <br><small class="text-muted">{{ file.children|length }} itens</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if file.is_folder %}
+                                            -
+                                        {% else %}
+                                            {{ format_file_size(file.file_size) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if file.is_folder %}
+                                            Pasta
+                                        {% else %}
+                                            {{ file.file_type.upper() if file.file_type != 'folder' else 'Pasta' }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ file.deleted_at.strftime('%d/%m/%Y %H:%M') if file.deleted_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="restoreFile('{{ file.id }}')" 
+                                                    title="Restaurar arquivo">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="permanentlyDeleteFile('{{ file.id }}')" 
+                                                    title="Excluir permanentemente">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Botões de ação em lote -->
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success" onclick="restoreSelectedFiles()">
+                            <i class="fas fa-undo me-2"></i>Restaurar Selecionados
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="permanentlyDeleteSelectedFiles()">
+                            <i class="fas fa-trash me-2"></i>Excluir Permanentemente
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="emptyTrash()">
+                            <i class="fas fa-broom me-2"></i>Esvaziar Lixeira
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-trash-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Lixeira vazia</h5>
+                        <p class="text-muted">Nenhum arquivo foi excluído ainda</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Restauração -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo text-success me-2"></i>Confirmar Restauração
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja restaurar este arquivo?</p>
+                <p class="text-muted">O arquivo será movido de volta para sua pasta original.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmRestore">
+                    <i class="fas fa-undo me-2"></i>Restaurar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão Permanente -->
+<div class="modal fade" id="permanentDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirmar Exclusão Permanente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Atenção!</strong> Esta ação não pode ser desfeita.</p>
+                <p class="text-danger">O arquivo será excluído permanentemente e não poderá ser recuperado.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmPermanentDelete">
+                    <i class="fas fa-trash me-2"></i>Excluir Permanentemente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentFileId = null;
+
+function restoreFile(fileId) {
+    currentFileId = fileId;
+    const modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+    modal.show();
+}
+
+function permanentlyDeleteFile(fileId) {
+    currentFileId = fileId;
+    const modal = new bootstrap.Modal(document.getElementById('permanentDeleteModal'));
+    modal.show();
+}
+
+function restoreSelectedFiles() {
+    const selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
+    if (selectedFiles.length === 0) {
+        alert('Selecione pelo menos um arquivo para restaurar.');
+        return;
+    }
+    
+    if (confirm(`Restaurar ${selectedFiles.length} arquivo(s)?`)) {
+        // Implementar restauração em lote
+        selectedFiles.forEach(fileId => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/restore/${fileId}`;
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+}
+
+function permanentlyDeleteSelectedFiles() {
+    const selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(cb => cb.value);
+    if (selectedFiles.length === 0) {
+        alert('Selecione pelo menos um arquivo para excluir permanentemente.');
+        return;
+    }
+    
+    if (confirm(`Excluir permanentemente ${selectedFiles.length} arquivo(s)? Esta ação não pode ser desfeita.`)) {
+        // Implementar exclusão permanente em lote
+        selectedFiles.forEach(fileId => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/permanent_delete/${fileId}`;
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+}
+
+function emptyTrash() {
+    if (confirm('Esvaziar toda a lixeira? Esta ação não pode ser desfeita.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/empty_trash';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Configurar modais
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de restauração
+    document.getElementById('confirmRestore').addEventListener('click', function() {
+        if (currentFileId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/restore/${currentFileId}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+    
+    // Modal de exclusão permanente
+    document.getElementById('confirmPermanentDelete').addEventListener('click', function() {
+        if (currentFileId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/permanent_delete/${currentFileId}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+    
+    // Checkbox "selecionar todos"
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.file-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+});
+</script>
+{% endblock %} 

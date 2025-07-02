@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CloudVault - Seu cofre digital seguro na nuvem. Armazene, organize e acesse seus arquivos de qualquer lugar.">
+    <meta name="keywords" content="cloud storage, armazenamento nuvem, backup, arquivos, segurança">
+    <meta name="author" content="CloudVault">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+    
+    <!-- Favicon simples para a aba -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%236366f1;stop-opacity:1' /><stop offset='100%' style='stop-color:%238b5cf6;stop-opacity:1' /></linearGradient></defs><circle cx='16' cy='16' r='15' fill='url(%23grad)'/><text x='16' y='22' font-family='Arial' font-size='12' font-weight='bold' text-anchor='middle' fill='white'>CV</text></svg>">
+    
+    <title>{% block title %}CloudVault - Seu Cofre Digital na Nuvem{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CloudVault CSS -->
+    <link href="{{ url_for('static', filename='css/cloudvault.css') }}" rel="stylesheet">
+    
+    <!-- Favicon inline -->
+    <style>
+        .favicon-inline {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 2px;
+            display: inline-block;
+            position: relative;
+        }
+        .favicon-inline::after {
+            content: "CV";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 8px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn {
+            border-radius: 12px;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .form-control {
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+        
+        .file-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        
+        .file-item:hover {
+            background-color: var(--light-color);
+            transform: translateX(4px);
+        }
+        
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .storage-info {
+            background: linear-gradient(135deg, var(--success-color), var(--info-color));
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+        
+        .file-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .btn-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .username-text {
+            color: var(--success-color) !important;
+            font-weight: 500;
+        }
+        
+        /* Tema Escuro */
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --light-color: #1e293b;
+            --dark-color: #f8fafc;
+            --border-color: #334155;
+            --text-color: #e2e8f0;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .navbar {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .form-control {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .form-control:focus {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .table {
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        [data-theme="dark"] .breadcrumb {
+            background: rgba(30, 41, 59, 0.9);
+        }
+        
+        [data-theme="dark"] .dropdown-menu {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .dropdown-item {
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .modal-footer {
+            border-top-color: var(--border-color);
+        }
+        
+        /* Botão de alternar tema */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+        
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* Garantir que o botão seja sempre visível */
+        .theme-toggle {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+            
+            .btn-group .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .theme-toggle {
+                width: 45px;
+                height: 45px;
+                bottom: 15px;
+                right: 15px;
+                font-size: 1rem;
+            }
+            
+            .storage-info {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
+            
+            .breadcrumb {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
+            
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            
+            .upload-area {
+                padding: 1.5rem;
+            }
+            
+            .upload-area h5 {
+                font-size: 1.1rem;
+            }
+            
+            .upload-area p {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-group .btn {
+                margin-bottom: 0.5rem;
+                width: 100%;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            .file-item .btn-group-sm .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .username-text {
+                font-size: 0.9rem;
+            }
+            
+            .btn-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand fw-bold cloudvault-logo" href="{{ url_for('index') }}">
+                <span class="cloud-shiny cloud-animation">
+                    <span class="cloud-part"></span>
+                </span>CloudVault
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                                <i class="fas fa-home me-1 icon-dashboard"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('organizations') }}">
+                                <i class="fas fa-building me-1"></i>Organizações
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reports') }}">
+                                <i class="fas fa-chart-line me-1 icon-reports"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-share-alt me-1 icon-settings"></i>Compartilhamento
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('shared_with_me') }}"><i class="fas fa-download me-2"></i>Compartilhados Comigo</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('shared_by_me') }}"><i class="fas fa-upload me-2"></i>Meus Compartilhamentos</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1 text-success"></i><span class="username-text">{{ current_user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="fas fa-cog me-2 icon-settings"></i>Configurações</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2 icon-logout"></i>Sair</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-circle" href="{{ url_for('logout') }}" title="Sair">
+                                <i class="fas fa-power-off"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('register') }}">
+                                <i class="fas fa-user-plus me-1"></i>Cadastrar
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-white py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-cloud me-2"></i>
+                CloudVault - Seu armazenamento na nuvem
+            </p>
+        </div>
+    </footer>
+
+    <!-- Botão de Alternar Tema -->
+    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Sistema de Tema
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        let currentTheme = savedTheme;
+        if (savedTheme === 'auto') {
+            currentTheme = prefersDark ? 'dark' : 'light';
+        }
+        
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeIcon(currentTheme);
+    }
+    
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    }
+    
+    function updateThemeIcon(theme) {
+        const icon = document.getElementById('themeIcon');
+        if (theme === 'dark') {
+            icon.className = 'fas fa-sun';
+        } else {
+            icon.className = 'fas fa-moon';
+        }
+    }
+    
+    // Event Listeners
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    
+    // Detectar mudança de preferência do sistema
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'auto') {
+            const newTheme = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+    });
+    
+    // Inicializar tema
+    document.addEventListener('DOMContentLoaded', initTheme);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

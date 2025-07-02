@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar: {{ file.original_filename }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-image me-2"></i>{{ file.original_filename }}
+                        </h4>
+                        <small class="text-muted">
+                            {{ format_file_size(file.file_size) }} • 
+                            {{ file.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ session.get('view_referrer', url_for('dashboard')) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <div class="image-container" style="max-height: 65vh; overflow: auto; position: relative;">
+                    <!-- Botões de navegação -->
+                    <button type="button" class="btn btn-outline-primary position-absolute" 
+                            style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                            id="prevBtn" onclick="previousImage()" title="Imagem anterior (←)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <button type="button" class="btn btn-outline-primary position-absolute" 
+                            style="right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                            id="nextBtn" onclick="nextImage()" title="Próxima imagem (→)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <!-- Contador de imagens -->
+                    <div class="position-absolute" style="top: 10px; right: 10px; z-index: 10;">
+                        <span class="badge bg-dark" id="imageCounter">1 / 1</span>
+                    </div>
+                    
+                    <img src="{{ url_for('preview_file', file_id=file.id) }}" 
+                         alt="{{ file.original_filename }}" 
+                         class="img-fluid" 
+                         style="max-width: 90%; max-height: 60vh; cursor: zoom-in;"
+                         onclick="toggleZoom(this)"
+                         id="imageViewer">
+                </div>
+                
+                <div class="mt-3">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="zoomIn()">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="zoomOut()">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="resetZoom()">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Miniaturas das imagens -->
+                <div class="mt-3" id="thumbnailsContainer" style="display: none;">
+                    <div class="d-flex justify-content-center flex-wrap" id="thumbnails">
+                        <!-- Miniaturas serão carregadas aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este arquivo?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-2"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentZoom = 1;
+const zoomStep = 0.2;
+let allImages = [];
+let currentImageIndex = 0;
+const currentFileId = {{ file.id }};
+
+// Carregar todas as imagens da pasta
+async function loadFolderImages() {
+    try {
+        console.log('Carregando imagens da pasta...');
+        const referrer = '{{ session.get("view_referrer", "") }}';
+        console.log('Referrer:', referrer);
+        
+        const response = await fetch(`/api/folder_images?referrer=${encodeURIComponent(referrer)}`);
+        const data = await response.json();
+        
+        console.log('Dados recebidos:', data);
+        
+        if (data.images && data.images.length > 0) {
+            allImages = data.images;
+            console.log('Imagens carregadas:', allImages.length);
+            
+            // Encontrar índice da imagem atual
+            currentImageIndex = allImages.findIndex(img => img.id === currentFileId);
+            if (currentImageIndex === -1) currentImageIndex = 0;
+            
+            console.log('Índice atual:', currentImageIndex);
+            
+            updateImageCounter();
+            updateNavigationButtons();
+            
+            // Mostrar miniaturas se houver mais de uma imagem
+            if (allImages.length > 1) {
+                showThumbnails();
+            }
+        } else {
+            console.log('Nenhuma imagem encontrada na pasta');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar imagens:', error);
+    }
+}
+
+// Navegar para imagem anterior
+function previousImage() {
+    if (allImages.length > 1) {
+        currentImageIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+        loadImage(allImages[currentImageIndex]);
+        updateImageCounter();
+        updateThumbnailSelection();
+    }
+}
+
+// Navegar para próxima imagem
+function nextImage() {
+    if (allImages.length > 1) {
+        currentImageIndex = (currentImageIndex + 1) % allImages.length;
+        loadImage(allImages[currentImageIndex]);
+        updateImageCounter();
+        updateThumbnailSelection();
+    }
+}
+
+// Carregar imagem específica
+function loadImage(imageData) {
+    const img = document.getElementById('imageViewer');
+    img.src = imageData.url;
+    img.alt = imageData.filename;
+    
+    // Atualizar título da página
+    document.title = `Visualizar: ${imageData.filename}`;
+    
+    // Resetar zoom
+    resetZoom();
+    
+    // Atualizar URL sem recarregar a página
+    const newUrl = `/view/${imageData.id}`;
+    window.history.pushState({}, '', newUrl);
+}
+
+// Atualizar contador de imagens
+function updateImageCounter() {
+    const counter = document.getElementById('imageCounter');
+    counter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+}
+
+// Atualizar botões de navegação
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (allImages.length <= 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+    } else {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+    }
+}
+
+// Mostrar miniaturas
+function showThumbnails() {
+    const container = document.getElementById('thumbnailsContainer');
+    const thumbnailsDiv = document.getElementById('thumbnails');
+    
+    thumbnailsDiv.innerHTML = '';
+    
+    allImages.forEach((image, index) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'm-1';
+        thumbnail.style.cursor = 'pointer';
+        thumbnail.innerHTML = `
+            <img src="${image.url}" 
+                 alt="${image.filename}" 
+                 style="width: 60px; height: 60px; object-fit: cover; border: 2px solid ${index === currentImageIndex ? '#007bff' : '#dee2e6'}; border-radius: 4px;"
+                 onclick="goToImage(${index})"
+                 title="${image.filename}">
+        `;
+        thumbnailsDiv.appendChild(thumbnail);
+    });
+    
+    container.style.display = 'block';
+}
+
+// Ir para imagem específica
+function goToImage(index) {
+    currentImageIndex = index;
+    loadImage(allImages[index]);
+    updateImageCounter();
+    updateThumbnailSelection();
+}
+
+// Atualizar seleção de miniatura
+function updateThumbnailSelection() {
+    const thumbnails = document.querySelectorAll('#thumbnails img');
+    thumbnails.forEach((thumb, index) => {
+        thumb.style.borderColor = index === currentImageIndex ? '#007bff' : '#dee2e6';
+    });
+}
+
+// Funções de zoom existentes
+function toggleZoom(img) {
+    if (img.style.transform === 'scale(2)') {
+        resetZoom();
+    } else {
+        img.style.transform = 'scale(2)';
+        img.style.cursor = 'zoom-out';
+        currentZoom = 2;
+    }
+}
+
+function zoomIn() {
+    currentZoom += zoomStep;
+    const img = document.getElementById('imageViewer');
+    img.style.transform = `scale(${currentZoom})`;
+    img.style.cursor = 'zoom-out';
+}
+
+function zoomOut() {
+    if (currentZoom > 0.5) {
+        currentZoom -= zoomStep;
+        const img = document.getElementById('imageViewer');
+        img.style.transform = `scale(${currentZoom})`;
+        if (currentZoom <= 1) {
+            img.style.cursor = 'zoom-in';
+        }
+    }
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    const img = document.getElementById('imageViewer');
+    img.style.transform = 'scale(1)';
+    img.style.cursor = 'zoom-in';
+}
+
+function deleteFile(fileId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete/${fileId}`;
+        document.body.appendChild(form);
+        form.submit();
+    };
+}
+
+// Controles de teclado
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        resetZoom();
+    } else if (e.key === '+') {
+        zoomIn();
+    } else if (e.key === '-') {
+        zoomOut();
+    } else if (e.key === 'ArrowLeft') {
+        previousImage();
+    } else if (e.key === 'ArrowRight') {
+        nextImage();
+    }
+});
+
+// Carregar imagens quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    loadFolderImages();
+});
+</script>
+{% endblock %} 

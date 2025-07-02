@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar: {{ file.original_filename }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-file-pdf me-2"></i>{{ file.original_filename }}
+                        </h4>
+                        <small class="text-muted">
+                            {{ format_file_size(file.file_size) }} • 
+                            {{ file.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                    </div>
+                    <div>
+                        <a href="{{ session.get('view_referrer', url_for('dashboard')) }}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-primary me-2">
+                            <i class="fas fa-download me-2"></i>Download
+                        </a>
+                        
+                        {% set user_permission = get_user_file_permission(file.id, current_user.id) %}
+                        
+                        {% if user_permission == 'admin' %}
+                        <button type="button" class="btn btn-danger" onclick="deleteFile({{ file.id }})">
+                            <i class="fas fa-trash me-2"></i>Excluir
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="pdf-container" style="height: 60vh;">
+                    <iframe src="{{ url_for('preview_file', file_id=file.id) }}#toolbar=1&navpanes=1&scrollbar=1" 
+                            width="100%" 
+                            height="100%" 
+                            style="border: none;">
+                        <p>Seu navegador não suporta visualização de PDF. 
+                           <a href="{{ url_for('download_file', file_id=file.id) }}">Clique aqui para baixar</a>
+                        </p>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este arquivo?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-2"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteFile(fileId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete/${fileId}`;
+        document.body.appendChild(form);
+        form.submit();
+    };
+}
+</script>
+{% endblock %} 
