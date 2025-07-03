@@ -314,31 +314,52 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+@app.route('/init_db')
+def init_db():
+    """Inicializa o banco de dados"""
+    try:
+        with app.app_context():
+            db.create_all()
+        return 'Banco de dados inicializado com sucesso!'
+    except Exception as e:
+        return f'Erro ao inicializar banco: {str(e)}'
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        
-        if User.query.filter_by(username=username).first():
-            flash('Nome de usuário já existe!', 'error')
+        try:
+            # Criar tabelas se não existirem
+            with app.app_context():
+                db.create_all()
+            
+            username = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
+            
+            if User.query.filter_by(username=username).first():
+                flash('Nome de usuário já existe!', 'error')
+                return redirect(url_for('register'))
+            
+            if User.query.filter_by(email=email).first():
+                flash('Email já cadastrado!', 'error')
+                return redirect(url_for('register'))
+            
+            user = User(
+                username=username,
+                email=email,
+                password_hash=generate_password_hash(password)
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            flash('Conta criada com sucesso!', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            print(f"Erro no registro: {e}")
+            import traceback
+            traceback.print_exc()
+            flash('Erro interno. Tente novamente.', 'error')
             return redirect(url_for('register'))
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email já cadastrado!', 'error')
-            return redirect(url_for('register'))
-        
-        user = User(
-            username=username,
-            email=email,
-            password_hash=generate_password_hash(password)
-        )
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Conta criada com sucesso!', 'success')
-        return redirect(url_for('login'))
     
     return render_template('register.html')
 
