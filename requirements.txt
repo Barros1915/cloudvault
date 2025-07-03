@@ -8,7 +8,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Werkzeug==3.1.3
 qrcode==7.4.2
-Pillow==10.0.1
+Pillow>=10.0.0
 # Dependências para conversão de arquivos
 pymupdf==1.23.8
 python-docx==1.1.0
@@ -25,4 +25,4 @@ gunicorn==21.2.0
 # Para conversão de áudio (opcional - instalar manualmente se necessário)
 # ffmpeg-python==0.2.0
 # Nota: pydub e moviepy foram removidos devido a problemas de compatibilidade com Python 3.12+
-# Para conversão de áudio/vídeo, instale manualmente: pip install pydub moviepy 
+# Para conversão de áudio/vídeo, instale manualmente: pip install pydub moviepy
