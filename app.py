@@ -486,8 +486,13 @@ def upload_file():
             continue
         
         if file:
+            # Verificar se a extensão é permitida
+            if not allowed_file(file.filename):
+                flash(f'Extensão não permitida para {file.filename}', 'error')
+                continue
+            
             # Gerar nome único para o arquivo
-            filename = secure_filename(file.filename)
+            filename = safe_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join(user_upload_folder, unique_filename)
             
@@ -532,8 +537,13 @@ def upload_multiple_files():
         
         if file:
             try:
+                # Verificar se a extensão é permitida
+                if not allowed_file(file.filename):
+                    flash(f'Extensão não permitida para {file.filename}', 'error')
+                    continue
+                
                 # Gerar nome único para o arquivo
-                filename = secure_filename(file.filename)
+                filename = safe_filename(file.filename)
                 unique_filename = f"{uuid.uuid4()}_{filename}"
                 file_path = os.path.join(user_upload_folder, unique_filename)
                 
@@ -2040,8 +2050,12 @@ def upload_single_file():
         user_upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], f'user_{current_user.id}')
         os.makedirs(user_upload_folder, exist_ok=True)
         
+        # Verificar se a extensão é permitida
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': f'Extensão não permitida para {file.filename}'}), 400
+        
         # Gerar nome único para o arquivo
-        filename = secure_filename(file.filename)
+        filename = safe_filename(file.filename)
         unique_filename = f"{uuid.uuid4()}_{filename}"
         file_path = os.path.join(user_upload_folder, unique_filename)
         
@@ -2677,8 +2691,13 @@ def upload_to_shared_folder(folder_id):
         return redirect(url_for('shared_folder_view', folder_id=folder_id))
     
     if file:
+        # Verificar se a extensão é permitida
+        if not allowed_file(file.filename):
+            flash(f'Extensão não permitida para {file.filename}', 'error')
+            return redirect(url_for('shared_folder_view', folder_id=folder_id))
+        
         # Salvar arquivo
-        filename = secure_filename(file.filename)
+        filename = safe_filename(file.filename)
         unique_id = str(uuid.uuid4())
         new_filename = f"{unique_id}_{filename}"
         
@@ -2759,6 +2778,25 @@ def create_folder_in_shared(folder_id):
     
     flash(f'Pasta "{folder_name}" criada com sucesso!', 'success')
     return redirect(url_for('shared_folder_view', folder_id=folder_id))
+
+def allowed_file(filename):
+    """Verifica se a extensão do arquivo é permitida"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def safe_filename(filename):
+    """Versão personalizada de secure_filename que preserva extensões importantes"""
+    # Preservar a extensão original
+    if '.' in filename:
+        name, ext = filename.rsplit('.', 1)
+        # Usar secure_filename apenas no nome, não na extensão
+        safe_name = secure_filename(name)
+        # Se o nome ficou vazio, usar um nome padrão
+        if not safe_name:
+            safe_name = 'file'
+        return f"{safe_name}.{ext}"
+    else:
+        return secure_filename(filename)
 
 if __name__ == '__main__':
     with app.app_context():
