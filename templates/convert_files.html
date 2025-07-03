@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}Conversor de Formatos - CloudVault{% endblock %}
+
+{% block extra_css %}
+<style>
+    .converter-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .format-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .format-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .format-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    
+    .image-icon { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
+    .video-icon { background: linear-gradient(45deg, #4834d4, #686de0); }
+    .audio-icon { background: linear-gradient(45deg, #00d2d3, #54a0ff); }
+    .document-icon { background: linear-gradient(45deg, #ff9ff3, #f368e0); }
+    
+    .conversion-options {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .file-drop-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-drop-zone:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+    
+    .file-drop-zone.dragover {
+        border-color: #007bff;
+        background: #e3f2fd;
+        transform: scale(1.02);
+    }
+    
+    .format-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .format-option {
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .format-option:hover {
+        border-color: #007bff;
+        background: #f8f9fa;
+    }
+    
+    .format-option.selected {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+    
+    .folder-selector {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .folder-tree {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .folder-item {
+        padding: 8px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+    }
+    
+    .folder-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .folder-item.selected {
+        background: #007bff;
+        color: white;
+    }
+    
+    .progress-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+    }
+    
+    .conversion-status {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .status-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .status-item:last-child {
+        border-bottom: none;
+    }
+    
+    .status-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+    }
+    
+    .status-success { background: #28a745; color: white; }
+    .status-error { background: #dc3545; color: white; }
+    .status-pending { background: #ffc107; color: black; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="cloud-gradient">
+                        <i class="fas fa-exchange-alt me-2"></i>Conversor de Formatos
+                    </h2>
+                    <p class="text-muted mb-0">Converta e organize seus arquivos</p>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+
+            <div class="converter-container">
+                <h4><i class="fas fa-magic me-2"></i>Formatos Suportados</h4>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="format-card text-center">
+                            <div class="text-primary mb-3">
+                                <i class="fas fa-image fa-3x"></i>
+                            </div>
+                            <h6>Imagens</h6>
+                            <small class="text-muted">JPG, PNG, GIF, BMP, WebP</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="format-card text-center">
+                            <div class="text-primary mb-3">
+                                <i class="fas fa-video fa-3x"></i>
+                            </div>
+                            <h6>Vídeos</h6>
+                            <small class="text-muted">MP4, AVI, MOV, MKV, WebM</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="format-card text-center">
+                            <div class="text-primary mb-3">
+                                <i class="fas fa-music fa-3x"></i>
+                            </div>
+                            <h6>Áudios</h6>
+                            <small class="text-muted">MP3, WAV, OGG, FLAC, AAC</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="format-card text-center">
+                            <div class="text-primary mb-3">
+                                <i class="fas fa-file-alt fa-3x"></i>
+                            </div>
+                            <h6>Documentos</h6>
+                            <small class="text-muted">PDF, DOC, TXT, RTF</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-upload me-2"></i>Selecionar Arquivos
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="file-drop-zone" id="fileDropZone">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Arraste arquivos aqui ou clique para selecionar</h5>
+                                <p class="text-muted">Você pode selecionar múltiplos arquivos</p>
+                                <p class="text-muted small">Tamanho máximo por arquivo: 500MB</p>
+                                <input type="file" id="fileInput" multiple style="display: none;">
+                                <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                    Selecionar Arquivos
+                                </button>
+                            </div>
+                            
+                            <div id="selectedFiles" class="mt-3"></div>
+                            
+                            <div class="mt-3" id="conversionOptions" style="display: none;">
+                                <h6><i class="fas fa-cog me-2"></i>Opções de Conversão</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Formato de saída:</label>
+                                            <select class="form-select" id="formatSelect">
+                                                <option value="">Selecione um formato...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Qualidade:</label>
+                                            <select class="form-select" id="qualitySelect">
+                                                <option value="high">Alta</option>
+                                                <option value="medium" selected>Média</option>
+                                                <option value="low">Baixa</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Pasta de destino:</label>
+                                    <select class="form-select" id="folderSelect">
+                                        <option value="">Pasta Raiz</option>
+                                        {% for folder in user_folders %}
+                                        <option value="{{ folder.id }}">{{ folder.original_filename }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <button type="button" class="btn btn-success" onclick="startConversion()">
+                                    <i class="fas fa-play me-2"></i>Iniciar Conversão
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Informações
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6>Formatos Suportados:</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Imagens:</strong> JPG ↔ PNG ↔ WebP ↔ BMP ↔ PDF</li>
+                                    <li><strong>Vídeos:</strong> MP4 ↔ AVI ↔ MOV ↔ MKV ↔ WebM</li>
+                                    <li><strong>Áudios:</strong> MP3 ↔ WAV ↔ OGG ↔ FLAC ↔ AAC</li>
+                                    <li><strong>Documentos:</strong> PDF ↔ DOCX ↔ DOC ↔ TXT</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Dicas:</h6>
+                                <ul class="list-unstyled">
+                                    <li>• Arquivos grandes podem demorar mais</li>
+                                    <li>• Qualidade alta = arquivo maior</li>
+                                    <li>• Alguns formatos podem perder qualidade</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Dica:</strong> Use a organização por pastas para manter seus arquivos organizados!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" id="progressContainer" style="display: none;">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Convertendo arquivos...
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" id="conversionProgress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <p class="text-muted mb-0" id="progressText">Preparando conversão...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFiles = [];
+
+// Mapeamento de formatos de conversão
+const conversionFormats = {
+    'image': {
+        '.jpg': ['PNG', 'WebP', 'BMP', 'PDF'],
+        '.png': ['JPG', 'WebP', 'BMP', 'PDF'],
+        '.gif': ['JPG', 'PNG', 'WebP', 'PDF'],
+        '.bmp': ['JPG', 'PNG', 'WebP', 'PDF'],
+        '.webp': ['JPG', 'PNG', 'BMP', 'PDF']
+    },
+    'video': {
+        '.mp4': ['AVI', 'MOV', 'MKV'],
+        '.avi': ['MP4', 'MOV', 'MKV'],
+        '.mov': ['MP4', 'AVI', 'MKV'],
+        '.mkv': ['MP4', 'AVI', 'MOV'],
+        '.webm': ['MP4', 'AVI', 'MOV']
+    },
+    'audio': {
+        '.mp3': ['WAV', 'OGG', 'FLAC'],
+        '.wav': ['MP3', 'OGG', 'FLAC'],
+        '.ogg': ['MP3', 'WAV', 'FLAC'],
+        '.flac': ['MP3', 'WAV', 'OGG'],
+        '.aac': ['MP3', 'WAV', 'OGG']
+    },
+    'document': {
+        '.pdf': ['DOCX', 'DOC', 'TXT'],
+        '.doc': ['PDF', 'TXT'],
+        '.docx': ['PDF', 'TXT'],
+        '.txt': ['PDF', 'DOCX'],
+        '.rtf': ['PDF', 'DOCX', 'TXT']
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupFileDropZone();
+    setupFileInput();
+});
+
+function setupFileDropZone() {
+    const dropZone = document.getElementById('fileDropZone');
+    
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        handleFileSelection(files);
+    });
+    
+    dropZone.addEventListener('click', function() {
+        document.getElementById('fileInput').click();
+    });
+}
+
+function setupFileInput() {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        handleFileSelection(files);
+    });
+}
+
+function handleFileSelection(files) {
+    selectedFiles = files;
+    displaySelectedFiles();
+    showConversionOptions();
+}
+
+function displaySelectedFiles() {
+    const container = document.getElementById('selectedFiles');
+    container.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'alert alert-info d-flex justify-content-between align-items-center';
+        fileDiv.innerHTML = `
+            <div>
+                <i class="fas fa-file me-2"></i>
+                <strong>${file.name}</strong>
+                <small class="text-muted">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(fileDiv);
+    });
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    displaySelectedFiles();
+    
+    if (selectedFiles.length === 0) {
+        document.getElementById('conversionOptions').style.display = 'none';
+    }
+}
+
+function showConversionOptions() {
+    if (selectedFiles.length === 0) return;
+    
+    const optionsDiv = document.getElementById('conversionOptions');
+    const formatSelect = document.getElementById('formatSelect');
+    
+    // Determinar formatos disponíveis baseado no primeiro arquivo
+    const firstFile = selectedFiles[0];
+    const fileExt = '.' + firstFile.name.split('.').pop().toLowerCase();
+    
+    let availableFormats = [];
+    for (const category in conversionFormats) {
+        if (conversionFormats[category][fileExt]) {
+            availableFormats = conversionFormats[category][fileExt];
+            break;
+        }
+    }
+    
+    // Criar opções de formato
+    formatSelect.innerHTML = '<option value="">Selecione um formato...</option>';
+    availableFormats.forEach(format => {
+        const option = document.createElement('option');
+        option.value = format.toLowerCase();
+        option.textContent = format;
+        formatSelect.appendChild(option);
+    });
+    
+    optionsDiv.style.display = 'block';
+}
+
+function startConversion() {
+    if (selectedFiles.length === 0) {
+        alert('Selecione pelo menos um arquivo!');
+        return;
+    }
+    const selectedFormat = document.getElementById('formatSelect').value;
+    if (!selectedFormat) {
+        alert('Selecione um formato de saída!');
+        return;
+    }
+    const quality = document.getElementById('qualitySelect').value;
+    const folderId = document.getElementById('folderSelect').value;
+    showProgress();
+    // Enviar cada arquivo para a API
+    let file = selectedFiles[0]; // Por enquanto, um por vez
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('target_format', selectedFormat);
+    formData.append('quality', quality);
+    formData.append('folder_id', folderId);
+    fetch('/api/convert_file', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        const progressBar = document.getElementById('conversionProgress');
+        const progressText = document.getElementById('progressText');
+        if (data.success) {
+            progressBar.style.width = '100%';
+            progressText.textContent = data.message;
+            alert(data.message);
+        } else {
+            progressBar.style.width = '0%';
+            progressText.textContent = data.error || 'Erro na conversão';
+            alert(data.error || 'Erro na conversão');
+        }
+        setTimeout(() => {
+            document.getElementById('progressContainer').style.display = 'none';
+        }, 1500);
+    })
+    .catch(err => {
+        const progressBar = document.getElementById('conversionProgress');
+        const progressText = document.getElementById('progressText');
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Erro na conversão';
+        alert('Erro na conversão: ' + err);
+        setTimeout(() => {
+            document.getElementById('progressContainer').style.display = 'none';
+        }, 1500);
+    });
+}
+
+function showProgress() {
+    document.getElementById('progressContainer').style.display = 'block';
+}
+</script>
+{% endblock %} 

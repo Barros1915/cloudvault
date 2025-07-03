@@ -1,0 +1,45 @@
+<!-- Modal Criar Projeto -->
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectModalLabel">
+                    <i class="fas fa-project-diagram"></i> Criar Novo Projeto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('create_project', org_id=organization.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="project_name" class="form-label">
+                            <i class="fas fa-tag"></i> Nome do Projeto *
+                        </label>
+                        <input type="text" class="form-control" id="project_name" name="name" 
+                               required placeholder="Ex: Sistema de Gestão">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="project_description" class="form-label">
+                            <i class="fas fa-info-circle"></i> Descrição
+                        </label>
+                        <textarea class="form-control" id="project_description" name="description" 
+                                  rows="3" placeholder="Descreva o objetivo do projeto..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> Projetos ajudam a organizar trabalhos colaborativos na organização.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Criar Projeto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,64 @@
+<!-- Modal Convidar Usuário -->
+<div class="modal fade" id="inviteUserModal" tabindex="-1" aria-labelledby="inviteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteUserModalLabel">
+                    <i class="fas fa-user-plus"></i> Convidar Usuário para Equipe
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="inviteUserForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user_email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email do Usuário *
+                        </label>
+                        <input type="email" class="form-control" id="user_email" name="user_email" 
+                               required placeholder="usuario@exemplo.com">
+                        <div class="form-text">
+                            Digite o email do usuário que você deseja convidar.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="user_role" class="form-label">
+                            <i class="fas fa-user-tag"></i> Função na Equipe
+                        </label>
+                        <select class="form-control" id="user_role" name="role">
+                            <option value="member">Membro</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                        <div class="form-text">
+                            Administradores podem convidar outros usuários e gerenciar a equipe.
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> O usuário receberá acesso à organização e poderá ver as pastas compartilhadas.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Convite
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para abrir o modal de convite com o ID da equipe
+function openInviteModal(teamId) {
+    const form = document.getElementById('inviteUserForm');
+    form.action = `/team/${teamId}/invite_user`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('inviteUserModal'));
+    modal.show();
+}
+</script> 

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ file.original_filename }} - CloudVault{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css" rel="stylesheet">
+<style>
+    .CodeMirror {
+        height: 70vh;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    .editor-toolbar {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-bottom: none;
+        border-radius: 8px 8px 0 0;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .theme-selector {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .theme-btn {
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .theme-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    .editor-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .file-info {
+        background: #e9ecef;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+    .save-indicator {
+        color: #28a745;
+        font-size: 12px;
+    }
+    .unsaved-changes {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="cloud-gradient">
+                        <i class="fas fa-edit me-2"></i>Editor de Código
+                    </h2>
+                    <p class="text-muted mb-0">Editando: {{ file.original_filename }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eye me-2"></i>Visualizar
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
+            </div>
+
+            <div class="file-info">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Tipo:</strong> {{ file.file_type.upper() }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Tamanho:</strong> {{ (file.file_size / 1024)|round(2) }} KB
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Modificado:</strong> {{ file.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Permissão:</strong> 
+                        <span class="badge bg-success">Edição</span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" id="editForm">
+                <div class="editor-toolbar">
+                    <div class="theme-selector">
+                        <span class="me-2">Tema:</span>
+                        <button type="button" class="theme-btn active" data-theme="default">Padrão</button>
+                        <button type="button" class="theme-btn" data-theme="monokai">Monokai</button>
+                        <button type="button" class="theme-btn" data-theme="dracula">Dracula</button>
+                        <button type="button" class="theme-btn" data-theme="material">Material</button>
+                    </div>
+                    <div class="editor-actions">
+                        <span id="saveIndicator" class="save-indicator">
+                            <i class="fas fa-check me-1"></i>Salvo
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatCode()">
+                            <i class="fas fa-magic me-1"></i>Formatar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="findAndReplace()">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-save me-1"></i>Salvar
+                        </button>
+                    </div>
+                </div>
+                
+                <textarea id="codeEditor" name="content">{{ content }}</textarea>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Busca e Substituição -->
+<div class="modal fade" id="findReplaceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>Buscar e Substituir
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="findText" class="form-label">Buscar:</label>
+                    <input type="text" class="form-control" id="findText">
+                </div>
+                <div class="mb-3">
+                    <label for="replaceText" class="form-label">Substituir por:</label>
+                    <input type="text" class="form-control" id="replaceText">
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="caseSensitive">
+                    <label class="form-check-label" for="caseSensitive">
+                        Diferenciar maiúsculas/minúsculas
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="performFind()">Buscar</button>
+                <button type="button" class="btn btn-warning" onclick="performReplace()">Substituir</button>
+                <button type="button" class="btn btn-danger" onclick="performReplaceAll()">Substituir Todos</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/search.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/dialog/dialog.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/trailingspace.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/comment-fold.min.js"></script>
+
+<script>
+let editor;
+let hasUnsavedChanges = false;
+
+// Mapeamento de extensões para modos
+const modeMap = {
+    '.js': 'javascript',
+    '.py': 'python',
+    '.html': 'xml',
+    '.xml': 'xml',
+    '.css': 'css',
+    '.md': 'markdown',
+    '.sql': 'sql',
+    '.php': 'php',
+    '.java': 'text/x-java-source',
+    '.cpp': 'text/x-c++src',
+    '.c': 'text/x-csrc',
+    '.json': 'application/json',
+    '.txt': 'text/plain'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const fileExt = '{{ file.file_type }}';
+    const mode = modeMap[fileExt] || 'text/plain';
+    
+    editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+        mode: mode,
+        theme: 'default',
+        lineNumbers: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        showTrailingSpace: true,
+        styleActiveLine: true,
+        foldGutter: true,
+        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        extraKeys: {
+            'Ctrl-S': function(cm) {
+                document.getElementById('editForm').submit();
+            },
+            'Ctrl-F': function(cm) {
+                findAndReplace();
+            },
+            'Ctrl-H': function(cm) {
+                findAndReplace();
+            },
+            'F11': function(cm) {
+                cm.setOption('fullScreen', !cm.getOption('fullScreen'));
+            },
+            'Esc': function(cm) {
+                if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false);
+            }
+        }
+    });
+
+    // Detectar mudanças
+    editor.on('change', function() {
+        hasUnsavedChanges = true;
+        updateSaveIndicator();
+    });
+
+    // Avisar antes de sair se há mudanças não salvas
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Configurar temas
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.dataset.theme;
+            editor.setOption('theme', theme === 'default' ? 'default' : theme);
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+
+function updateSaveIndicator() {
+    const indicator = document.getElementById('saveIndicator');
+    if (hasUnsavedChanges) {
+        indicator.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Mudanças não salvas';
+        indicator.className = 'unsaved-changes';
+    } else {
+        indicator.innerHTML = '<i class="fas fa-check me-1"></i>Salvo';
+        indicator.className = 'save-indicator';
+    }
+}
+
+function formatCode() {
+    // Formatação básica - pode ser expandida com bibliotecas específicas
+    const content = editor.getValue();
+    const fileExt = '{{ file.file_type }}';
+    
+    if (fileExt === '.json') {
+        try {
+            const formatted = JSON.stringify(JSON.parse(content), null, 2);
+            editor.setValue(formatted);
+        } catch (e) {
+            alert('JSON inválido!');
+        }
+    } else if (fileExt === '.html' || fileExt === '.xml') {
+        // Formatação básica de HTML/XML
+        const formatted = content.replace(/>\s*</g, '>\n<');
+        editor.setValue(formatted);
+    } else {
+        alert('Formatação automática não disponível para este tipo de arquivo.');
+    }
+}
+
+function findAndReplace() {
+    const modal = new bootstrap.Modal(document.getElementById('findReplaceModal'));
+    modal.show();
+}
+
+function performFind() {
+    const findText = document.getElementById('findText').value;
+    const caseSensitive = document.getElementById('caseSensitive').checked;
+    
+    if (findText) {
+        editor.execCommand('find', findText, caseSensitive);
+    }
+}
+
+function performReplace() {
+    const findText = document.getElementById('findText').value;
+    const replaceText = document.getElementById('replaceText').value;
+    const caseSensitive = document.getElementById('caseSensitive').checked;
+    
+    if (findText && replaceText) {
+        editor.execCommand('replace', replaceText, caseSensitive);
+    }
+}
+
+function performReplaceAll() {
+    const findText = document.getElementById('findText').value;
+    const replaceText = document.getElementById('replaceText').value;
+    const caseSensitive = document.getElementById('caseSensitive').checked;
+    
+    if (findText && replaceText) {
+        const content = editor.getValue();
+        let newContent;
+        
+        if (caseSensitive) {
+            newContent = content.replace(new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replaceText);
+        } else {
+            newContent = content.replace(new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), replaceText);
+        }
+        
+        editor.setValue(newContent);
+        bootstrap.Modal.getInstance(document.getElementById('findReplaceModal')).hide();
+    }
+}
+
+// Marcar como salvo quando o formulário for enviado
+document.getElementById('editForm').addEventListener('submit', function() {
+    hasUnsavedChanges = false;
+    updateSaveIndicator();
+});
+</script>
+{% endblock %} 

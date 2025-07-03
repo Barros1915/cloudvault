@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}⚙️ Configurações - Cloud Storage{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-cog me-2"></i>Configurações da Conta
+                </h2>
+                <p class="text-muted">Gerencie suas informações pessoais e preferências</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações da Conta -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Informações do Perfil
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('update_profile') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ current_user.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ current_user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data de Criação</label>
+                        <input type="text" class="form-control" 
+                               value="{{ current_user.created_at.strftime('%d/%m/%Y %H:%M') }}" readonly>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lock me-2"></i>Alterar Senha
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('change_password') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Senha Atual</label>
+                        <input type="password" class="form-control" id="current_password" 
+                               name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="new_password" 
+                               name="new_password" required minlength="6">
+                        <div class="form-text">Mínimo de 6 caracteres</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirmar Nova Senha</label>
+                        <input type="password" class="form-control" id="confirm_password" 
+                               name="confirm_password" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-key me-2"></i>Alterar Senha
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas e Dados -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Estatísticas da Conta
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h3 class="text-primary" id="fileCount">-</h3>
+                            <p class="text-muted mb-0">Arquivos</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success" id="totalSize">-</h3>
+                        <p class="text-muted mb-0">Armazenamento</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="d-grid">
+                    <a href="{{ url_for('export_data') }}" class="btn btn-outline-info">
+                        <i class="fas fa-download me-2"></i>Exportar Dados da Conta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Segurança e Privacidade
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Configurações de Segurança</h6>
+                    {% if current_user.two_factor_enabled %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>2FA Ativo!</strong> Sua conta está protegida com autenticação de dois fatores.
+                        </div>
+                        <form action="{{ url_for('disable_2fa') }}" method="POST" class="d-inline">
+                            <div class="mb-3">
+                                <label for="disablePassword" class="form-label">Senha para Desabilitar 2FA</label>
+                                <input type="password" class="form-control" id="disablePassword" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-times me-2"></i>Desabilitar 2FA
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="twoFactor" disabled checked>
+                            <label class="form-check-label" for="twoFactor">
+                                Autenticação de dois fatores
+                            </label>
+                        </div>
+                        <a href="{{ url_for('setup_2fa') }}" class="btn btn-primary">
+                            <i class="fas fa-shield-alt me-2"></i>Configurar 2FA
+                        </a>
+                    {% endif %}
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">
+                            Notificações por email
+                        </label>
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-outline-secondary" disabled>
+                        <i class="fas fa-history me-2"></i>Histórico de Login (em breve)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configurações de Interface -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-palette me-2"></i>Preferências de Interface
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="themeSelect" class="form-label">Tema</label>
+                    <select class="form-select" id="themeSelect">
+                        <option value="auto" selected>Automático</option>
+                        <option value="light">Claro</option>
+                        <option value="dark">Escuro</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="languageSelect" class="form-label">Idioma</label>
+                    <select class="form-select" id="languageSelect">
+                        <option value="pt-BR" selected>Português (Brasil)</option>
+                        <option value="en-US">English (US)</option>
+                        <option value="es-ES">Español</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="itemsPerPage" class="form-label">Itens por página</label>
+                    <select class="form-select" id="itemsPerPage">
+                        <option value="10">10 itens</option>
+                        <option value="25" selected>25 itens</option>
+                        <option value="50">50 itens</option>
+                        <option value="100">100 itens</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="savePreferences()">
+                    <i class="fas fa-save me-2"></i>Salvar Preferências
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Configurações Avançadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Upload de Arquivos</h6>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoCompress" checked>
+                        <label class="form-check-label" for="autoCompress">
+                            Comprimir imagens automaticamente
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showPreview" checked>
+                        <label class="form-check-label" for="showPreview">
+                            Mostrar preview de arquivos
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6>Notificações</h6>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="uploadNotifications" checked>
+                        <label class="form-check-label" for="uploadNotifications">
+                            Notificar uploads concluídos
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="storageWarnings" checked>
+                        <label class="form-check-label" for="storageWarnings">
+                            Avisos de armazenamento
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-primary" onclick="saveAdvancedSettings()">
+                    <i class="fas fa-save me-2"></i>Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zona de Perigo -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Zona de Perigo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="text-danger">Deletar Conta Permanentemente</h6>
+                        <p class="text-muted">
+                            Esta ação irá deletar permanentemente sua conta e todos os arquivos associados. 
+                            Esta ação não pode ser desfeita.
+                        </p>
+                        <ul class="text-muted">
+                            <li>Todos os seus arquivos serão removidos</li>
+                            <li>Sua conta será deletada permanentemente</li>
+                            <li>Você perderá acesso a todos os dados</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="fas fa-trash me-2"></i>Deletar Conta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Deletar Conta -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Deletar Conta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('delete_account') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Atenção!</strong> Esta ação é irreversível!
+                    </div>
+                    <p>Para confirmar a exclusão da sua conta, digite sua senha:</p>
+                    <div class="mb-3">
+                        <label for="deletePassword" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="deletePassword" 
+                               name="password" required>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            Eu entendo que esta ação não pode ser desfeita
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                        <i class="fas fa-trash me-2"></i>Deletar Conta Permanentemente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carregar estatísticas da conta
+function loadAccountStats() {
+    fetch('/api/storage_info')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('fileCount').textContent = data.file_count;
+            document.getElementById('totalSize').textContent = data.total_size;
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas:', error);
+        });
+}
+
+// Salvar preferências de interface
+function savePreferences() {
+    const theme = document.getElementById('themeSelect').value;
+    const language = document.getElementById('languageSelect').value;
+    const itemsPerPage = document.getElementById('itemsPerPage').value;
+    
+    // Salvar no localStorage
+    localStorage.setItem('theme', theme);
+    localStorage.setItem('language', language);
+    localStorage.setItem('itemsPerPage', itemsPerPage);
+    
+    // Mostrar mensagem de sucesso
+    showAlert('Preferências salvas com sucesso!', 'success');
+}
+
+// Salvar configurações avançadas
+function saveAdvancedSettings() {
+    const autoCompress = document.getElementById('autoCompress').checked;
+    const showPreview = document.getElementById('showPreview').checked;
+    const uploadNotifications = document.getElementById('uploadNotifications').checked;
+    const storageWarnings = document.getElementById('storageWarnings').checked;
+    
+    // Salvar no localStorage
+    localStorage.setItem('autoCompress', autoCompress);
+    localStorage.setItem('showPreview', showPreview);
+    localStorage.setItem('uploadNotifications', uploadNotifications);
+    localStorage.setItem('storageWarnings', storageWarnings);
+    
+    // Mostrar mensagem de sucesso
+    showAlert('Configurações salvas com sucesso!', 'success');
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+    
+    // Auto-remover após 3 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+// Gerenciar confirmação de deletar conta
+document.getElementById('confirmDelete').addEventListener('change', function() {
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const password = document.getElementById('deletePassword').value;
+    confirmBtn.disabled = !this.checked || password.length === 0;
+});
+
+document.getElementById('deletePassword').addEventListener('input', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.disabled = !confirmCheckbox.checked || this.value.length === 0;
+});
+
+// Carregar configurações salvas
+function loadSavedSettings() {
+    // Carregar preferências
+    const theme = localStorage.getItem('theme') || 'auto';
+    const language = localStorage.getItem('language') || 'pt-BR';
+    const itemsPerPage = localStorage.getItem('itemsPerPage') || '25';
+    
+    document.getElementById('themeSelect').value = theme;
+    document.getElementById('languageSelect').value = language;
+    document.getElementById('itemsPerPage').value = itemsPerPage;
+    
+    // Carregar configurações avançadas
+    const autoCompress = localStorage.getItem('autoCompress') !== 'false';
+    const showPreview = localStorage.getItem('showPreview') !== 'false';
+    const uploadNotifications = localStorage.getItem('uploadNotifications') !== 'false';
+    const storageWarnings = localStorage.getItem('storageWarnings') !== 'false';
+    
+    document.getElementById('autoCompress').checked = autoCompress;
+    document.getElementById('showPreview').checked = showPreview;
+    document.getElementById('uploadNotifications').checked = uploadNotifications;
+    document.getElementById('storageWarnings').checked = storageWarnings;
+}
+
+// Inicializar página
+document.addEventListener('DOMContentLoaded', function() {
+    loadAccountStats();
+    loadSavedSettings();
+});
+</script>
+{% endblock %} 

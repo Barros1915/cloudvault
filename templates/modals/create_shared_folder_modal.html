@@ -1,0 +1,46 @@
+<!-- Modal Criar Pasta Compartilhada -->
+<div class="modal fade" id="createSharedFolderModal" tabindex="-1" aria-labelledby="createSharedFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSharedFolderModalLabel">
+                    <i class="fas fa-folder-plus"></i> Criar Pasta Compartilhada
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('create_shared_folder', org_id=organization.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="folder_name" class="form-label">
+                            <i class="fas fa-tag"></i> Nome da Pasta *
+                        </label>
+                        <input type="text" class="form-control" id="folder_name" name="name" 
+                               required placeholder="Ex: Documentos da Empresa">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="folder_description" class="form-label">
+                            <i class="fas fa-info-circle"></i> Descrição
+                        </label>
+                        <textarea class="form-control" id="folder_description" name="description" 
+                                  rows="3" placeholder="Descreva o conteúdo da pasta..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> Pastas compartilhadas permitem que todos os membros da organização 
+                        acessem e colaborem nos arquivos.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save"></i> Criar Pasta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

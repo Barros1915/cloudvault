@@ -1,0 +1,45 @@
+<!-- Modal Criar Equipe -->
+<div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTeamModalLabel">
+                    <i class="fas fa-users"></i> Criar Nova Equipe
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('create_team', org_id=organization.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="team_name" class="form-label">
+                            <i class="fas fa-tag"></i> Nome da Equipe *
+                        </label>
+                        <input type="text" class="form-control" id="team_name" name="name" 
+                               required placeholder="Ex: Equipe de Desenvolvimento">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="team_description" class="form-label">
+                            <i class="fas fa-info-circle"></i> Descrição
+                        </label>
+                        <textarea class="form-control" id="team_description" name="description" 
+                                  rows="3" placeholder="Descreva o propósito da equipe..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> Após criar a equipe, você poderá convidar membros para participar.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Criar Equipe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

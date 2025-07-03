@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Organizações - CloudVault{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-building"></i> Organizações</h1>
+                <a href="{{ url_for('create_organization') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nova Organização
+                </a>
+            </div>
+            
+            {% if organizations %}
+                <div class="row">
+                    {% for org in organizations %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-building text-primary"></i>
+                                        {{ org.name }}
+                                    </h5>
+                                    {% if org.owner_id == current_user.id %}
+                                        <span class="badge bg-success">Dono</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Membro</span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if org.description %}
+                                    <p class="card-text text-muted">{{ org.description }}</p>
+                                {% endif %}
+                                
+                                <div class="small text-muted mb-3">
+                                    <i class="fas fa-calendar"></i>
+                                    Criada em {{ org.created_at.strftime('%d/%m/%Y') }}
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <a href="{{ url_for('organization_dashboard', org_id=org.id) }}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-tachometer-alt"></i> Acessar Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">Nenhuma organização encontrada</h3>
+                    <p class="text-muted">Crie sua primeira organização para começar a colaborar com sua equipe.</p>
+                    <a href="{{ url_for('create_organization') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Criar Primeira Organização
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

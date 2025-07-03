@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}{{ file.original_filename }} - Player de Mídia - CloudVault{% endblock %}
+
+{% block extra_css %}
+<style>
+    .media-player-container {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        margin: 20px 0;
+    }
+    
+    .media-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .media-controls {
+        background: #1a1a1a;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .control-btn {
+        background: #333;
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .control-btn:hover {
+        background: #555;
+        transform: translateY(-2px);
+    }
+    
+    .control-btn.active {
+        background: #007bff;
+    }
+    
+    .volume-slider {
+        width: 100px;
+        height: 6px;
+        border-radius: 3px;
+        background: #555;
+        outline: none;
+        -webkit-appearance: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+    }
+    
+    .progress-container {
+        flex: 1;
+        margin: 0 20px;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #555;
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #007bff, #00d4ff);
+        border-radius: 3px;
+        transition: width 0.1s ease;
+    }
+    
+    .time-display {
+        color: #ccc;
+        font-size: 14px;
+        font-family: monospace;
+    }
+    
+    .playlist-container {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .playlist-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .playlist-item:hover {
+        background: #e9ecef;
+    }
+    
+    .playlist-item.active {
+        background: #007bff;
+        color: white;
+    }
+    
+    .media-thumbnail {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 15px;
+    }
+    
+    .fullscreen-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 1000;
+    }
+    
+    .quality-selector {
+        background: #333;
+        border: 1px solid #555;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+    }
+    
+    .subtitle-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .subtitle-btn {
+        background: #333;
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    .subtitle-btn.active {
+        background: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="cloud-gradient">
+                        <i class="fas fa-play-circle me-2"></i>Player de Mídia
+                    </h2>
+                    <p class="text-muted mb-0">{{ file.original_filename }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
+            </div>
+
+            <div class="media-player-container">
+                <div class="media-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-music me-2"></i>{{ file.original_filename }}</h5>
+                            <p class="mb-0">
+                                <i class="fas fa-clock me-1"></i>{{ (file.file_size / 1024 / 1024)|round(2) }} MB
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-calendar me-1"></i>{{ file.created_at.strftime('%d/%m/%Y') }}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="quality-selector">
+                                <select id="qualitySelect" class="quality-selector">
+                                    <option value="auto">Auto</option>
+                                    <option value="720p">720p</option>
+                                    <option value="480p">480p</option>
+                                    <option value="360p">360p</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="position: relative;">
+                    {% if file.file_type in ['.mp4', '.avi', '.mov', '.mkv', '.webm'] %}
+                        <video id="mediaPlayer" controls style="width: 100%; height: auto; max-height: 70vh;">
+                            <source src="{{ url_for('download_file', file_id=file.id) }}" type="video/{{ file.file_type[1:] }}">
+                            Seu navegador não suporta o elemento de vídeo.
+                        </video>
+                    {% elif file.file_type in ['.mp3', '.wav', '.ogg', '.flac', '.aac'] %}
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 60px 20px; text-align: center;">
+                            <i class="fas fa-music fa-4x text-white mb-3"></i>
+                            <h4 class="text-white">{{ file.original_filename }}</h4>
+                            <audio id="mediaPlayer" controls style="width: 100%; max-width: 500px;">
+                                <source src="{{ url_for('download_file', file_id=file.id) }}" type="audio/{{ file.file_type[1:] }}">
+                                Seu navegador não suporta o elemento de áudio.
+                            </audio>
+                        </div>
+                    {% endif %}
+                    
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+
+                <div class="media-controls">
+                    <div class="control-group">
+                        <button class="control-btn" id="playPauseBtn" onclick="togglePlayPause()">
+                            <i class="fas fa-play" id="playIcon"></i>
+                        </button>
+                        <button class="control-btn" onclick="skipBackward()">
+                            <i class="fas fa-backward"></i>
+                        </button>
+                        <button class="control-btn" onclick="skipForward()">
+                            <i class="fas fa-forward"></i>
+                        </button>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar" onclick="seekTo(event)">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="time-display" id="currentTime">0:00</span>
+                            <span class="time-display" id="totalTime">0:00</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <button class="control-btn" onclick="toggleMute()">
+                            <i class="fas fa-volume-up" id="volumeIcon"></i>
+                        </button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
+                        <button class="control-btn" onclick="toggleLoop()" id="loopBtn">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="control-btn" onclick="toggleShuffle()" id="shuffleBtn">
+                            <i class="fas fa-random"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if folder_media %}
+            <div class="playlist-container">
+                <h5><i class="fas fa-list me-2"></i>Outros arquivos de mídia na pasta</h5>
+                <div class="row">
+                    {% for media_file in folder_media %}
+                    <div class="col-md-4 mb-3">
+                        <div class="playlist-item" onclick="playMedia({{ media_file.id }})">
+                            <img src="{{ url_for('static', filename='img/audio-icon.png') if media_file.file_type in ['.mp3', '.wav', '.ogg'] else url_for('static', filename='img/video-icon.png') }}" 
+                                 class="media-thumbnail" alt="Thumbnail">
+                            <div>
+                                <div class="fw-bold">{{ media_file.original_filename }}</div>
+                                <small class="text-muted">{{ (media_file.file_size / 1024 / 1024)|round(2) }} MB</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let player;
+let isPlaying = false;
+let isMuted = false;
+let isLooping = false;
+let isShuffling = false;
+let currentVolume = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    player = document.getElementById('mediaPlayer');
+    
+    if (player) {
+        // Configurar eventos do player
+        player.addEventListener('loadedmetadata', function() {
+            updateTotalTime();
+        });
+        
+        player.addEventListener('timeupdate', function() {
+            updateProgress();
+            updateCurrentTime();
+        });
+        
+        player.addEventListener('ended', function() {
+            if (isLooping) {
+                player.currentTime = 0;
+                player.play();
+            }
+        });
+        
+        // Configurar controles de volume
+        const volumeSlider = document.getElementById('volumeSlider');
+        volumeSlider.addEventListener('input', function() {
+            setVolume(this.value / 100);
+        });
+        
+        // Configurar teclas de atalho
+        document.addEventListener('keydown', function(e) {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    skipBackward();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    skipForward();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    changeVolume(0.1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    changeVolume(-0.1);
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    toggleMute();
+                    break;
+                case 'KeyL':
+                    e.preventDefault();
+                    toggleLoop();
+                    break;
+            }
+        });
+    }
+});
+
+function togglePlayPause() {
+    if (player.paused) {
+        player.play();
+        isPlaying = true;
+        document.getElementById('playIcon').className = 'fas fa-pause';
+    } else {
+        player.pause();
+        isPlaying = false;
+        document.getElementById('playIcon').className = 'fas fa-play';
+    }
+}
+
+function skipBackward() {
+    player.currentTime = Math.max(0, player.currentTime - 10);
+}
+
+function skipForward() {
+    player.currentTime = Math.min(player.duration, player.currentTime + 10);
+}
+
+function seekTo(event) {
+    const progressBar = document.getElementById('progressBar');
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    player.currentTime = percentage * player.duration;
+}
+
+function updateProgress() {
+    const progressFill = document.getElementById('progressFill');
+    const percentage = (player.currentTime / player.duration) * 100;
+    progressFill.style.width = percentage + '%';
+}
+
+function updateCurrentTime() {
+    const currentTimeElement = document.getElementById('currentTime');
+    currentTimeElement.textContent = formatTime(player.currentTime);
+}
+
+function updateTotalTime() {
+    const totalTimeElement = document.getElementById('totalTime');
+    totalTimeElement.textContent = formatTime(player.duration);
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function toggleMute() {
+    if (isMuted) {
+        player.volume = currentVolume;
+        isMuted = false;
+        document.getElementById('volumeIcon').className = 'fas fa-volume-up';
+        document.getElementById('volumeSlider').value = currentVolume * 100;
+    } else {
+        currentVolume = player.volume;
+        player.volume = 0;
+        isMuted = true;
+        document.getElementById('volumeIcon').className = 'fas fa-volume-mute';
+        document.getElementById('volumeSlider').value = 0;
+    }
+}
+
+function setVolume(volume) {
+    player.volume = volume;
+    currentVolume = volume;
+    isMuted = volume === 0;
+    
+    if (volume === 0) {
+        document.getElementById('volumeIcon').className = 'fas fa-volume-mute';
+    } else if (volume < 0.5) {
+        document.getElementById('volumeIcon').className = 'fas fa-volume-down';
+    } else {
+        document.getElementById('volumeIcon').className = 'fas fa-volume-up';
+    }
+}
+
+function changeVolume(delta) {
+    const newVolume = Math.max(0, Math.min(1, player.volume + delta));
+    setVolume(newVolume);
+    document.getElementById('volumeSlider').value = newVolume * 100;
+}
+
+function toggleLoop() {
+    isLooping = !isLooping;
+    player.loop = isLooping;
+    document.getElementById('loopBtn').classList.toggle('active', isLooping);
+}
+
+function toggleShuffle() {
+    isShuffling = !isShuffling;
+    document.getElementById('shuffleBtn').classList.toggle('active', isShuffling);
+}
+
+function toggleFullscreen() {
+    if (player.requestFullscreen) {
+        player.requestFullscreen();
+    } else if (player.webkitRequestFullscreen) {
+        player.webkitRequestFullscreen();
+    } else if (player.msRequestFullscreen) {
+        player.msRequestFullscreen();
+    }
+}
+
+function playMedia(fileId) {
+    // Redirecionar para o player com o novo arquivo
+    window.location.href = `/view_media/${fileId}`;
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,745 @@
+{% extends "base.html" %}
+
+{% block title %}☁️ CloudVault - Dashboard{% endblock %}
+
+{% block content %}
+<!-- Header do Dashboard -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-0 files-title">
+                            <i class="fas fa-cloud me-2 cloud-gradient"></i>Meus Arquivos
+                        </h2>
+                        <p class="mb-0 folder-title">
+                            {% if current_folder %}
+                                {{ current_folder.original_filename }}
+                            {% else %}
+                                Pasta raiz
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="storage-info">
+                            <i class="fas fa-database me-2"></i>
+                            <span id="storage-info">Carregando...</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="loadStorageInfo()" title="Atualizar">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Breadcrumb -->
+{% if breadcrumb or current_folder %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-home me-1"></i>Início
+                    </a>
+                </li>
+                {% for folder in breadcrumb %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('dashboard', folder=folder.id) }}">
+                            {{ folder.original_filename }}
+                        </a>
+                    </li>
+                {% endfor %}
+                {% if current_folder %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ current_folder.original_filename }}
+                    </li>
+                {% endif %}
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Barra de Ferramentas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Primeira linha de botões -->
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="fas fa-upload me-2"></i>Upload
+                            </button>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#folderModal">
+                                <i class="fas fa-folder-plus me-2"></i>Nova Pasta
+                            </button>
+                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#uploadMultipleModal">
+                                <i class="fas fa-files-o me-2"></i>Múltiplos
+                            </button>
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadFolderModal">
+                                <i class="fas fa-folder-open me-2"></i>Pasta
+                            </button>
+                            </div>
+                            <!-- Segunda linha de botões -->
+                            <div class="d-flex gap-2">
+                            <a href="{{ url_for('convert_files') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-exchange-alt me-2"></i>Conversor
+                            </a>
+                            <a href="{{ url_for('manage_shared_files') }}" class="btn btn-outline-info">
+                                <i class="fas fa-share-alt me-2"></i>Compartilhados
+                            </a>
+                                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#recentFilesModal">
+                                    <i class="fas fa-clock me-2"></i>Recentes
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#youtubeModal">
+                                    <i class="fas fa-download me-2"></i>YouTube
+                                </button>
+                                <a href="{{ url_for('trash') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-trash-alt me-2"></i>Lixeira
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Buscar arquivos...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Arquivos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if files %}
+                    <div class="table-responsive">
+                        <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Dica:</strong> Dê duplo clique em um arquivo para visualizá-lo ou em uma pasta para abri-la.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" class="form-check-input" id="selectAll">
+                                    </th>
+                                    <th>Nome</th>
+                                    <th>Tamanho</th>
+                                    <th>Tipo</th>
+                                    <th>Modificado</th>
+                                    <th width="150">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr class="file-item" data-file-id="{{ file.id }}" data-is-folder="{{ 'true' if file.is_folder else 'false' }}" ondblclick="handleDoubleClick('{{ file.id }}', {{ 'true' if file.is_folder else 'false' }})">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input file-checkbox" value="{{ file.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-3">
+                                                {% if file.is_folder %}
+                                                    📁
+                                                {% else %}
+                                                    {{ get_file_icon(file.original_filename) }}
+                                                {% endif %}
+                                            </span>
+                                            <div>
+                                                <strong>{{ file.original_filename }}</strong>
+                                                {% if file.is_folder %}
+                                                    <br><small class="text-muted">{{ file.children|length }} itens</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if file.is_folder %}
+                                            -
+                                        {% else %}
+                                            {{ format_file_size(file.file_size) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if file.is_folder %}
+                                            Pasta
+                                        {% else %}
+                                            {{ file.file_type.upper() if file.file_type != 'folder' else 'Pasta' }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ file.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td width="150">
+                                        <div class="btn-group btn-group-sm">
+                                            {% if not file.is_folder %}
+                                                <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-outline-primary" title="Download">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                {% if can_preview_file(file.file_path) %}
+                                                <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-outline-info" title="Visualizar" target="_blank">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if file.file_type in ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.mp3', '.wav', '.ogg', '.flac', '.aac'] %}
+                                                <a href="{{ url_for('view_media', file_id=file.id) }}" class="btn btn-outline-warning" title="Reproduzir">
+                                                    <i class="fas fa-play"></i>
+                                                </a>
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if file.is_folder %}
+                                                <a href="{{ url_for('dashboard', folder=file.id) }}" class="btn btn-outline-info" title="Abrir pasta">
+                                                    <i class="fas fa-folder-open"></i>
+                                                </a>
+                                                <a href="{{ url_for('download_folder', folder_id=file.id) }}" class="btn btn-outline-primary" title="Download da pasta (ZIP)">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-outline-secondary" 
+                                                    onclick="showMoveModal({{ file.id }}, '{{ file.original_filename }}')" 
+                                                    title="Mover arquivo">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </button>
+                                            <a href="{{ url_for('share_file', file_id=file.id) }}" class="btn btn-outline-success" title="Compartilhar">
+                                                <i class="fas fa-share-alt"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" onclick="deleteFile('{{ file.id }}')" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum arquivo encontrado</h5>
+                        <p class="text-muted">Comece fazendo upload de arquivos ou criando uma pasta</p>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="fas fa-upload me-2"></i>Fazer Upload
+                            </button>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#folderModal">
+                                <i class="fas fa-folder-plus me-2"></i>Criar Pasta
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Arquivos Compartilhados -->
+{% if shared_files and not current_folder %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-share-alt me-2 cloud-gradient"></i>Arquivos Compartilhados Comigo
+                    </h5>
+                    <a href="{{ url_for('manage_shared_files') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-cog me-1"></i>Gerenciar
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Dica:</strong> Para excluir um arquivo compartilhado, você precisa ser o dono do arquivo ou ter permissão "admin". 
+                    Arquivos compartilhados com permissão "view" ou "edit" não podem ser excluídos por quem recebeu.
+                </div>
+                {% if shared_files %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Arquivo</th>
+                                    <th>Compartilhado por</th>
+                                    <th>Permissão</th>
+                                    <th>Data</th>
+                                    <th width="200">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shared_item in shared_files %}
+                                {% set file = shared_item.file %}
+                                {% set share = shared_item.share %}
+                                {% if file %}
+                                <tr class="table-info">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if file.is_folder %}
+                                                <i class="fas fa-folder text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-file text-primary me-2"></i>
+                                            {% endif %}
+                                            <strong>{{ file.original_filename }}</strong>
+                                            <span class="badge bg-info ms-2">Compartilhado</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user me-1"></i>{{ share.shared_by.username }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if share.permission == 'admin' else 'primary' if share.permission == 'edit' else 'secondary' }}">
+                                            {{ share.permission.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ share.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if file.is_folder %}
+                                                <a href="{{ url_for('download_folder', folder_id=file.id) }}" class="btn btn-outline-primary" title="Download da pasta (ZIP)">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            {% else %}
+                                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-outline-primary" title="Download">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if can_preview_file(file.file_path) %}
+                                            <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-outline-info" title="Visualizar" target="_blank">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if share.permission in ['edit', 'admin'] %}
+                                            <a href="{{ url_for('edit_file', file_id=file.id) }}" class="btn btn-outline-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if share.permission == 'admin' or file.user_id == current_user.id %}
+                                            <button type="button" class="btn btn-outline-danger" onclick="deleteFile('{{ file.id }}')" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">Nenhum arquivo compartilhado com você</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+
+
+
+<!-- Arquivos que Eu Compartilhei -->
+{% if not current_folder %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-share-square me-2 cloud-gradient"></i>Arquivos que Eu Compartilhei
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-center mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Use a página de <a href="{{ url_for('manage_shared_files') }}" class="text-decoration-none">Gerenciar Arquivos Compartilhados</a> para ver e gerenciar seus compartilhamentos.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal de Upload -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>Upload de Arquivos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Arraste arquivos aqui ou clique para selecionar</h5>
+                        <p class="text-muted">Você pode selecionar múltiplos arquivos</p>
+                        <p class="text-muted small">Tamanho máximo por arquivo: 500MB</p>
+                        <input type="file" name="file" multiple class="form-control" id="fileInput" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                            Selecionar Arquivos
+                        </button>
+                    </div>
+                    <div id="fileList" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Enviar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Nova Pasta -->
+<div class="modal fade" id="folderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder-plus me-2"></i>Nova Pasta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('create_folder') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="parent_folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                    <div class="mb-3">
+                        <label for="folderName" class="form-label">Nome da pasta</label>
+                        <input type="text" class="form-control" id="folderName" name="folder_name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-folder-plus me-2"></i>Criar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Upload de Múltiplos Arquivos -->
+<div class="modal fade" id="uploadMultipleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-files-o me-2"></i>Upload de Múltiplos Arquivos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('upload_multiple_files') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                    <div class="upload-area" id="uploadMultipleArea">
+                        <i class="fas fa-files-o fa-3x text-muted mb-3"></i>
+                        <h5>Selecione múltiplos arquivos</h5>
+                        <p class="text-muted">Você pode selecionar vários arquivos de uma vez</p>
+                        <p class="text-muted small">Tamanho máximo por arquivo: 500MB</p>
+                        <input type="file" name="files" multiple class="form-control" id="multipleFileInput" style="display: none;" accept="*/*">
+                        <button type="button" class="btn btn-outline-info" onclick="document.getElementById('multipleFileInput').click()">
+                            Selecionar Múltiplos Arquivos
+                        </button>
+                    </div>
+                    <div id="multipleFileList" class="mt-3"></div>
+                    
+                    <!-- Progresso detalhado -->
+                    <div id="uploadProgressContainer" class="mt-3" style="display: none;">
+                        <div class="progress mb-2">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="uploadProgressBar" 
+                                 role="progressbar" 
+                                 style="width: 0%">
+                                <span id="uploadProgressText">0%</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <span id="uploadStatus">Preparando...</span>
+                            </small>
+                            <small class="text-muted">
+                                <span id="uploadCount">0</span> de <span id="uploadTotal">0</span> arquivos
+                            </small>
+                        </div>
+                        <div id="uploadLog" class="mt-2" style="max-height: 150px; overflow-y: auto; font-size: 0.875rem;">
+                            <!-- Log de upload será inserido aqui -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="uploadMultipleBtn" onclick="startBatchUpload()">
+                        <i class="fas fa-upload me-2"></i>Enviar Todos
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Upload de Pasta Completa -->
+<div class="modal fade" id="uploadFolderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder-open me-2"></i>Upload de Pasta Completa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('upload_folder') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
+                    <div class="upload-area" id="uploadFolderArea">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <h5>Selecione uma pasta para upload</h5>
+                        <p class="text-muted">Todos os arquivos da pasta serão enviados mantendo a estrutura</p>
+                        <p class="text-muted small">Tamanho máximo por arquivo: 500MB</p>
+                        <input type="file" name="folder_files" multiple class="form-control" id="folderFileInput" style="display: none;" webkitdirectory directory>
+                        <button type="button" class="btn btn-outline-warning" onclick="selectFolder()">
+                            Selecionar Pasta
+                        </button>
+                    </div>
+                    <div id="folderFileList" class="mt-3"></div>
+                    <div class="progress mt-3" id="folderUploadProgress" style="display: none;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning" id="uploadFolderBtn">
+                        <i class="fas fa-upload me-2"></i>Enviar Pasta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modal de Mover Arquivo -->
+<div class="modal fade" id="moveFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder-open me-2"></i>Mover Arquivo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="destinationFolder" class="form-label">Pasta de destino</label>
+                    <select class="form-select" id="destinationFolder">
+                        <option value="">Pasta raiz</option>
+                        <!-- Opções serão carregadas dinamicamente -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMoveFile()">
+                    <i class="fas fa-arrow-right me-2"></i>Mover
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Arquivos Recentes -->
+<div class="modal fade" id="recentFilesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-clock me-2 cloud-gradient"></i>Arquivos Recentes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="recentFilesContainer">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir os arquivos selecionados?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash me-2"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Download do YouTube -->
+<div class="modal fade" id="youtubeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-youtube me-2 text-danger"></i>Download do YouTube
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="youtubeUrl" class="form-label">URL do YouTube:</label>
+                    <input type="url" class="form-control" id="youtubeUrl" name="youtube_url"
+                           placeholder="https://www.youtube.com/watch?v=..." required>
+                    <div class="form-text">
+                        Cole aqui a URL do vídeo ou playlist do YouTube.
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="youtubeFormat" class="form-label">Formato:</label>
+                            <select class="form-select" id="youtubeFormat" name="format">
+                                <option value="video">Vídeo (MP4)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="youtubeQuality" class="form-label">Qualidade:</label>
+                            <select class="form-select" id="youtubeQuality" name="quality">
+                                <option value="best">Melhor disponível</option>
+                                <option value="1080p">1080p (Full HD)</option>
+                                <option value="720p">720p (HD)</option>
+                                <option value="480p">480p</option>
+                                <option value="360p">360p</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="youtubePlaylist" name="playlist">
+                        <label class="form-check-label" for="youtubePlaylist">
+                            Baixar playlist completa
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        Marque esta opção se a URL for de uma playlist.
+                    </div>
+                </div>
+                
+                <!-- Área de informações do vídeo (inicialmente oculta) -->
+                <div id="youtubeInfo" style="display: none;">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <img id="youtubeThumbnail" src="" alt="Thumbnail" class="img-fluid rounded">
+                                </div>
+                                <div class="col-md-9">
+                                    <h6 id="youtubeVideoTitle" class="text-primary"></h6>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-user me-1"></i>
+                                        <span id="youtubeUploader"></span>
+                                    </p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span id="youtubeDuration"></span>
+                                    </p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-eye me-1"></i>
+                                        <span id="youtubeViews"></span> visualizações
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <span id="youtubeDate"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Área de progresso (inicialmente oculta) -->
+                <div id="youtubeProgress" style="display: none;">
+                    <div class="mb-3">
+                        <h6 id="youtubeTitle" class="text-primary"></h6>
+                        <div class="progress mb-2">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="youtubeProgressBar" 
+                                 role="progressbar" 
+                                 style="width: 0%">
+                                <span id="youtubeProgressText">0%</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted" id="youtubeStatus">Iniciando...</small>
+                            <small class="text-muted" id="youtubePercentage">0%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="youtubeDownloadBtn" onclick="startYouTubeDownload()">
+                    <i class="fas fa-download me-2"></i>Baixar Vídeo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %} 
