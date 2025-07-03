@@ -15,7 +15,7 @@ from io import BytesIO
 import tempfile
 import shutil
 from PIL import Image
-import fitz  # PyMuPDF
+# import fitz  # PyMuPDF - temporariamente desabilitado
 from docx import Document
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
