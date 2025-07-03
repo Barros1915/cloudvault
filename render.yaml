@@ -17,4 +17,4 @@ services:
       - key: UPLOAD_FOLDER
         value: uploads
       - key: MAX_CONTENT_LENGTH
-        value: 524288000 
+        value: 524288000
